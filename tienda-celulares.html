@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Celulares</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --white: #ffffff;
+      --off: #f8f8f6;
+      --border: #e8e8e4;
+      --border-dark: #d0d0c8;
+      --text: #1a1a18;
+      --muted: #888880;
+      --accent: #1a1a18;
+      --accent-light: #f0f0ec;
+      --green: #2d6a4f;
+      --green-bg: #edf7f1;
+      --red: #c0392b;
+      --red-bg: #fdf0ee;
+      --amber: #b45309;
+      --amber-bg: #fef8ee;
+      --radius: 12px;
+      --radius-sm: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--off);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+      letter-spacing: -0.3px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-dot { width: 8px; height: 8px; background: var(--text); border-radius: 50%; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .badge-count {
+      background: var(--accent-light);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 64px);
+    }
+
+    /* ── Sidebar / Formulario ── */
+    .sidebar {
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow-y: auto;
+    }
+    .sidebar-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--text);
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--text);
+      box-shadow: 0 0 0 3px rgba(26,26,24,0.06);
+    }
+    .form-input::placeholder { color: #bbb; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Toggle disponible */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--off);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+    }
+    .toggle-label { font-size: 14px; color: var(--text); }
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--border-dark);
+      border-radius: 22px;
+      transition: background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: var(--green); }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(18px); }
+
+    /* Upload imagen */
+    .upload-area {
+      border: 1.5px dashed var(--border-dark);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-area:hover { border-color: var(--text); background: var(--off); }
+    .upload-area input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-icon { font-size: 24px; margin-bottom: 6px; }
+    .upload-text { font-size: 13px; color: var(--muted); }
+    .upload-preview {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      display: none;
+    }
+
+    /* Botones */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: white;
+      width: 100%;
+    }
+    .btn-primary:hover { background: #333; }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--text); background: var(--off); }
+    .btn-danger {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid #f5c6c0;
+    }
+    .btn-danger:hover { background: #fce0dc; }
+    .btn-sm { padding: 6px 12px; font-size: 13px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Contenido principal ── */
+    .main {
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .main-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .main-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex: 1;
+      max-width: 320px;
+    }
+    .search-icon { padding: 0 12px; color: var(--muted); font-size: 16px; }
+    .search-input {
+      border: none;
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      padding: 10px 12px 10px 0;
+      width: 100%;
+      color: var(--text);
+      background: transparent;
+    }
+
+    /* ── Cards de celulares ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+      animation: fadeIn 0.3s ease both;
+    }
+    .card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: var(--off);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--border-dark);
+      font-size: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-img img { width: 100%; height: 100%; object-fit: cover; }
+    .card-img.no-img::after { content: '📱'; font-size: 40px; }
+
+    .card-body { padding: 16px; }
+    .card-marca {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .card-modelo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-precio {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .card-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chip {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+    .chip-stock { background: var(--off); color: var(--muted); border: 1px solid var(--border); }
+    .chip-disponible { background: var(--green-bg); color: var(--green); }
+    .chip-nodisponible { background: var(--red-bg); color: var(--red); }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--off);
+    }
+
+    /* ── Empty state ── */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-text { font-size: 15px; }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .toast {
+      background: var(--text);
+      color: white;
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.success { background: var(--green); }
+    .toast.error   { background: var(--red); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Modal edición ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 400px;
+      max-width: 95vw;
+      box-shadow: var(--shadow-lg);
+      animation: fadeIn 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-family: 'DM Serif Display', serif; font-size: 20px; }
+    .modal-close {
+      background: var(--off);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 30px; height: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted);
+    }
+    .modal-close:hover { background: var(--border); }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-dark); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    Gestión Celulares
+  </div>
+  <div class="header-actions">
+    <span class="badge-count" id="total-badge">0 productos</span>
+  </div>
+</header>
+
+<!-- Layout principal -->
+<div class="layout">
+
+  <!-- Sidebar: Formulario agregar -->
+  <aside class="sidebar">
+    <div class="sidebar-title">Agregar celular</div>
+
+    <div class="form-group">
+      <label class="form-label">Marca</label>
+      <input class="form-input" id="f-marca" type="text" placeholder="Samsung, Apple, Xiaomi…"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Modelo</label>
+      <input class="form-input" id="f-modelo" type="text" placeholder="Galaxy A55, iPhone 15…"/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Precio</label>
+        <input class="form-input" id="f-precio" type="number" min="0" placeholder="0.00"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock</label>
+        <input class="form-input" id="f-stock" type="number" min="0" placeholder="0"/>
+      </div>
+    </div>
+
+    <div class="toggle-group">
+      <span class="toggle-label">Disponible</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="f-disponible" checked/>
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Imagen</label>
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="f-imagen" accept="image/*" onchange="previewImagen(this)"/>
+        <img class="upload-preview" id="upload-preview" src="" alt=""/>
+        <div id="upload-placeholder">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Haz clic o arrastra una imagen</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-guardar" onclick="guardarCelular()">
+      Agregar celular
+    </button>
+    <button class="btn btn-outline" onclick="limpiarFormulario()">Limpiar</button>
+  </aside>
+
+  <!-- Main: Lista de celulares -->
+  <main class="main">
+    <div class="main-header">
+      <div class="main-title">Inventario</div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="buscador" placeholder="Buscar por marca o modelo…" oninput="filtrar()"/>
+      </div>
+    </div>
+
+    <div class="grid" id="grid-celulares">
+      <div class="empty">
+        <div class="empty-icon">📱</div>
+        <div class="empty-text">Cargando productos…</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal edición -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Editar celular</div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+
+    <input type="hidden" id="e-id"/>
+
+    <div class="form-group">
+      <label class="form-label">Marca</label>
+      <input class="form-input" id="e-marca" type="text"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Modelo</label>
+      <input class="form-input" id="e-modelo" type="text"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Precio</label>
+        <input class="form-input" id="e-precio" type="number"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Stock</label>
+        <input class="form-input" id="e-stock" type="number"/>
+      </div>
+    </div>
+    <div class="toggle-group">
+      <span class="toggle-label">Disponible</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="e-disponible"/>
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Imagen (opcional)</label>
+      <div class="upload-area">
+        <input type="file" id="e-imagen" accept="image/*" onchange="previewImagenEdit(this)"/>
+        <img class="upload-preview" id="edit-preview" src="" alt=""/>
+        <div id="edit-placeholder">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Cambiar imagen</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="btn-editar" onclick="actualizarCelular()">Guardar cambios</button>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  const API = 'http://localhost:8080/api/v1/celulares';
+  let celulares = [];
+  let busqueda = '';
+
+  // ── Inicializar ──────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', cargarCelulares);
+
+  async function cargarCelulares() {
+    try {
+      const res = await fetch(API);
+      if (!res.ok) throw new Error('Error al cargar');
+      celulares = await res.json();
+      renderGrid(celulares);
+      actualizarBadge();
+    } catch (e) {
+      mostrarEmpty('No se pudo conectar con la API. Verifica que el servidor esté corriendo.');
+    }
+  }
+
+  // ── Render ───────────────────────────────────────────────
+  function renderGrid(lista) {
+    const grid = document.getElementById('grid-celulares');
+    if (!lista.length) {
+      mostrarEmpty('No hay celulares registrados. Agrega el primero.');
+      return;
+    }
+    grid.innerHTML = lista.map((c, i) => `
+      <div class="card" style="animation-delay:${i * 0.04}s">
+        <div class="card-img ${c.imagenUrl ? '' : 'no-img'}">
+          ${c.imagenUrl ? `<img src="${API}/${c.id}/imagen" alt="${c.modelo}" onerror="this.parentElement.classList.add('no-img'); this.remove()"/>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-marca">${c.marca}</div>
+          <div class="card-modelo">${c.modelo}</div>
+          <div class="card-meta">
+            <div class="card-precio">$${Number(c.precio).toLocaleString('es-CO')}</div>
+          </div>
+          <div class="card-chips">
+            <span class="chip chip-stock">Stock: ${c.stock}</span>
+            <span class="chip ${c.disponible ? 'chip-disponible' : 'chip-nodisponible'}">
+              ${c.disponible ? '● Disponible' : '● No disponible'}
+            </span>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-sm" style="flex:1" onclick="abrirModal(${c.id})">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCelular(${c.id})">🗑</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function mostrarEmpty(msg) {
+    document.getElementById('grid-celulares').innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📱</div>
+        <div class="empty-text">${msg}</div>
+      </div>`;
+  }
+
+  function actualizarBadge() {
+    const n = celulares.length;
+    document.getElementById('total-badge').textContent = `${n} producto${n !== 1 ? 's' : ''}`;
+  }
+
+  // ── Filtro búsqueda ──────────────────────────────────────
+  function filtrar() {
+    busqueda = document.getElementById('buscador').value.toLowerCase();
+    const filtrados = celulares.filter(c =>
+      c.marca.toLowerCase().includes(busqueda) ||
+      c.modelo.toLowerCase().includes(busqueda)
+    );
+    renderGrid(filtrados);
+  }
+
+  // ── Guardar nuevo ────────────────────────────────────────
+  async function guardarCelular() {
+    const marca     = document.getElementById('f-marca').value.trim();
+    const modelo    = document.getElementById('f-modelo').value.trim();
+    const precio    = document.getElementById('f-precio').value;
+    const stock     = document.getElementById('f-stock').value;
+    const disponible = document.getElementById('f-disponible').checked;
+    const imagenFile = document.getElementById('f-imagen').files[0];
+
+    if (!marca || !modelo || !precio || stock === '') {
+      toast('Completa todos los campos requeridos.', 'error'); return;
+    }
+
+    const datos = { marca, modelo, precio: parseFloat(precio), stock: parseInt(stock), disponible };
+    const form = new FormData();
+    form.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }));
+    if (imagenFile) form.append('imagen', imagenFile);
+
+    const btn = document.getElementById('btn-guardar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Guardando…';
+
+    try {
+      const res = await fetch(API, { method: 'POST', body: form });
+      if (!res.ok) throw new Error();
+      toast('Celular agregado correctamente.', 'success');
+      limpiarFormulario();
+      await cargarCelulares();
+    } catch {
+      toast('Error al guardar. Revisa la conexión.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Agregar celular';
+    }
+  }
+
+  // ── Eliminar ─────────────────────────────────────────────
+  async function eliminarCelular(id) {
+    if (!confirm('¿Eliminar este celular?')) return;
+    try {
+      const res = await fetch(`${API}/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      toast('Celular eliminado.', 'success');
+      await cargarCelulares();
+    } catch {
+      toast('Error al eliminar.', 'error');
+    }
+  }
+
+  // ── Modal edición ────────────────────────────────────────
+  function abrirModal(id) {
+    const c = celulares.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('e-id').value       = c.id;
+    document.getElementById('e-marca').value    = c.marca;
+    document.getElementById('e-modelo').value   = c.modelo;
+    document.getElementById('e-precio').value   = c.precio;
+    document.getElementById('e-stock').value    = c.stock;
+    document.getElementById('e-disponible').checked = c.disponible;
+
+    // Preview imagen actual
+    const prev = document.getElementById('edit-preview');
+    const placeholder = document.getElementById('edit-placeholder');
+    if (c.imagenUrl) {
+      prev.src = `${API}/${c.id}/imagen`;
+      prev.style.display = 'block';
+      placeholder.style.display = 'none';
+    } else {
+      prev.style.display = 'none';
+      placeholder.style.display = 'block';
+    }
+
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function cerrarModal(e) {
+    if (!e || e.target === document.getElementById('modal-overlay')) {
+      document.getElementById('modal-overlay').classList.remove('open');
+      document.getElementById('e-imagen').value = '';
+    }
+  }
+
+  async function actualizarCelular() {
+    const id       = document.getElementById('e-id').value;
+    const marca    = document.getElementById('e-marca').value.trim();
+    const modelo   = document.getElementById('e-modelo').value.trim();
+    const precio   = document.getElementById('e-precio').value;
+    const stock    = document.getElementById('e-stock').value;
+    const disponible = document.getElementById('e-disponible').checked;
+    const imagenFile = document.getElementById('e-imagen').files[0];
+
+    if (!marca || !modelo || !precio || stock === '') {
+      toast('Completa todos los campos.', 'error'); return;
+    }
+
+    const datos = { marca, modelo, precio: parseFloat(precio), stock: parseInt(stock), disponible };
+    const form = new FormData();
+    form.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }));
+    if (imagenFile) form.append('imagen', imagenFile);
+
+    const btn = document.getElementById('btn-editar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Guardando…';
+
+    try {
+      // PUT al endpoint (necesitas agregarlo en el backend)
+      const res = await fetch(`${API}/${id}`, { method: 'PUT', body: form });
+      if (!res.ok) throw new Error();
+      toast('Celular actualizado.', 'success');
+      cerrarModal();
+      await cargarCelulares();
+    } catch {
+      toast('Error al actualizar. Asegúrate de tener el endpoint PUT en tu API.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Guardar cambios';
+    }
+  }
+
+  // ── Utilidades ───────────────────────────────────────────
+  function previewImagen(input) {
+    const prev = document.getElementById('upload-preview');
+    const placeholder = document.getElementById('upload-placeholder');
+    if (input.files && input.files[0]) {
+      prev.src = URL.createObjectURL(input.files[0]);
+      prev.style.display = 'block';
+      placeholder.style.display = 'none';
+    }
+  }
+
+  function previewImagenEdit(input) {
+    const prev = document.getElementById('edit-preview');
+    const placeholder = document.getElementById('edit-placeholder');
+    if (input.files && input.files[0]) {
+      prev.src = URL.createObjectURL(input.files[0]);
+      prev.style.display = 'block';
+      placeholder.style.display = 'none';
+    }
+  }
+
+  function limpiarFormulario() {
+    ['f-marca','f-modelo','f-precio','f-stock'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-disponible').checked = true;
+    document.getElementById('f-imagen').value = '';
+    document.getElementById('upload-preview').style.display = 'none';
+    document.getElementById('upload-placeholder').style.display = 'block';
+  }
+
+  function toast(msg, tipo = '') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${tipo}`;
+    t.innerHTML = `${tipo === 'success' ? '✓' : tipo === 'error' ? '✕' : 'ℹ'} ${msg}`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+</script>
+</body>
+</html>
